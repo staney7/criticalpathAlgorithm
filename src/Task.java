@@ -9,14 +9,14 @@ public class Task implements Cloneable{
     public int r=1;
     public int childnumber=0;
     public int[] child=new int[100];
-    public int c;
-    public int m;
-    public int[] tnet=new int[100];
-    public int[] ftnet=new int[100];
+    public double c;
+    public double m;
+    public double[] tnet=new double[100];
+    public double[] ftnet=new double[100];
     public int fnum=0;
     public int[] f=new int[100];
-    public int starttime=0;
-    public int finishtime=0;
+    public double starttime=0;
+    public double finishtime=0;
     public boolean isCalc=false;
 
 
@@ -50,12 +50,12 @@ public class Task implements Cloneable{
         this.fnum--;
     }
 
-    public  void addchildEdge(int b,int w){
+    public  void addchildEdge(int b,double w){
         this.child[this.childnumber]=b;
         this.tnet[this.childnumber]=w;
         this.childnumber++;
     }
-    public  void addfatherEdge(int b,int w){
+    public  void addfatherEdge(int b,double w){
         this.f[this.fnum]=b;
         this.ftnet[this.fnum]=w;
         this.fnum++;

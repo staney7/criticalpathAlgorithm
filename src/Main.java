@@ -2,7 +2,6 @@ import java.io.File;
 import java.util.*;
 
 public class Main {
-
     public int T(Task[] task, int left, int right) {
         int sum = 0;
         for (int i = 0; i < left; i++)
@@ -40,13 +39,8 @@ public class Main {
     public void ToTree(Task[] task) {
         for (int i = 0; i < task.length; i++) {
             Task currentTask = task[i];
-            if (currentTask.fnum != 0) {
-                /**
-                 *  maxtnet :  max tnet ;
-                 *  maxfid :   id of father task with max tnet ;
-                 *  fchildid  : serial number of fathertask.child;
-                 */
-                int maxfnet = 0;
+            if (currentTask.fnum >1) {
+                double maxfnet = 0;
                 int maxfid = 0;
                 for (int j = 0; j < currentTask.fnum; j++) {
                     Task ftask = task[currentTask.f[j]];
@@ -58,18 +52,17 @@ public class Main {
                 /**
                  * delete edge which is not between fathertask and currenttask
                  */
-                for (int j = 0; j < currentTask.fnum; j++) {
+                Task taska=(Task)currentTask.clone();
+                for (int j = 0; j < taska.fnum; j++) {
                     if (j != maxfid) {
 //                        System.out.println(i+" "+j);
-                        Task ftask = task[currentTask.f[j]];
+                        Task ftask = task[taska.f[j]];
                         currentTask.deletefatherEdge(ftask.taskid);
-                        ftask.deletechildEdge(currentTask.taskid);
+                        ftask.deletechildEdge(taska.taskid);
                     }
                 }
             }
         }
-
-
     }
 
     /**
@@ -79,28 +72,28 @@ public class Main {
      * @param taskid currenttaskid
      * @return total runtime in Mobile
      */
-    public int SortTaskGraph(Task[] task, int taskid) {
+    public double SortTaskGraph(Task[] task, int taskid) {
         Task currentTask = task[taskid];
-        int[] m = new int[100];
-        int totalm = 0;
-        for (int i = 0; i < currentTask.childnumber; i++) {
-            m[i] = SortTaskGraph(task, currentTask.child[i]);
-            totalm += m[i];
-        }
+        double[] m = new double[100];
+        double totalm = 0;
+        for (int i = 0; i < currentTask.childnumber; i++)
+            if (i < task.length - 1) {
+                m[i] = SortTaskGraph(task, currentTask.child[i]);
+                totalm += m[i];
+            }
         for (int i = 0; i < currentTask.childnumber - 1; i++)
             for (int j = i + 1; j < currentTask.childnumber; j++)
                 if (m[i] < m[j]) {
-                    int temp = m[i];
+                    double temp = m[i];
                     m[i] = m[j];
                     m[j] = temp;
-                    temp = currentTask.child[i];
+                    int temp1 = currentTask.child[i];
                     currentTask.child[i] = currentTask.child[j];
-                    currentTask.child[j] = temp;
+                    currentTask.child[j] = temp1;
                 }
         totalm += currentTask.m;
         return totalm;
     }
-
 
     public void setPositon(Task[] task, int taskid, int r) {
         Task currentTask = task[taskid];
@@ -110,27 +103,27 @@ public class Main {
         }
     }
 
-    public int TM(Task[] task) {
-        int tm = 0;
+    public double TM(Task[] task) {
+        double tm = 0;
         for (int i = 0; i < task.length; i++) {
             if (task[i].r == 1) tm += task[i].m;
         }
         return tm;
     }
 
-    public int TC(Task[] task, List<Integer> Ventry) {
-        int tc = 0;
+    public double TC(Task[] task, List<Integer> Ventry) {
+        double tc = 0;
         for (int i = 0; i < task.length; i++) {
-            if (task[i].r == 0) tc += task[i].m;
+            if (task[i].r == 0) tc += task[i].c;
         }
-        int tq = 0;
+        double tq = 0;
         return tc + tq;
     }
 
-    public int TNET(Task[] task, List<Integer> Ventry) {
-        int tnet = 0;
+    public double TNET(Task[] task, List<Integer> Ventry) {
+        double tnet = 0;
         for (int i = 0; i < Ventry.size(); i++) {
-            Task currenttask = task[i];
+            Task currenttask = task[Ventry.get(i)];
             int ftask = currenttask.f[0];
             tnet += task[ftask].tnet[0];
         }
@@ -142,19 +135,33 @@ public class Main {
      *
      * @param task taskgraph;
      */
-    public int ConcurrentTask(Task[] task) {
+    public double ConcurrentTask(Task[] task, int r) {
         /**
          * reduce the graph into tree and
          * sort by total runtime if task in mobile
          */
         Task[] taskcopy = Task.taskcopy(task);
+        task[0].r = -1;
+        task[task.length - 1].r = -1;
+        Task taska = (Task) task[0].clone();
+        for (int i = 0; i < taska.childnumber; i++) {
+            task[taska.child[i]].deletefatherEdge(0);
+            task[0].deletechildEdge(taska.child[i]);
+        }
+        taska = (Task) task[task.length - 1].clone();
+        for (int i = 0; i < taska.fnum; i++) {
+            task[taska.f[i]].deletechildEdge(taska.taskid);
+            task[task.length - 1].deletefatherEdge(taska.f[i]);
+        }
         ToTree(task);
-        SortTaskGraph(task, 0);
+        SortTaskGraph(task, 1);
         /**
          * algorithm 2: offloading concurrent Subgraph
          */
+        int currentr=task[1].r;
+        for (int i = 1; i < task.length - 1; i++) task[i].r = r;
         List<Integer> Ventry = new ArrayList<>();
-        Task currentTask = task[0];
+        Task currentTask = task[1];
         while (currentTask.childnumber != 0) {
             int i = 0;
             while ((2 * currentTask.r - 1) * (TM(task) - TC(task, Ventry)) > TNET(task, Ventry)) {
@@ -165,6 +172,7 @@ public class Main {
                     setPositon(task, childtask.taskid, 1);
                 }
                 Ventry.add(currentTask.child[i]);
+                if (i==currentTask.childnumber-1) break;
                 i++;
             }
             if (currentTask.r == 1) {
@@ -179,45 +187,34 @@ public class Main {
             currentTask = task[currentTask.child[i]];
         }
 
-        for (int i = 0; i < task.length; i++) {
-            task[i].r = task[i].r;
-        }
+//        for (int i = 0; i < task.length; i++) {
+//            task[i].r = task[i].r;
+//        }
+        task[0].r = 1;
+        task[task.length - 1].r = 1;
         for (int i = 0; i < taskcopy.length; i++) {
             taskcopy[i].r = task[i].r;
             System.out.print(task[i].r + " ");
         }
-        int calc = CalcTimeByTaskGraph(taskcopy);
+        double calc = CalcTimeByTaskGraph(taskcopy);
         return calc;
     }
 
 
-    public int simplefuntion(Task[] task) {
-        int minTime = Integer.MAX_VALUE;
-//        for (int k=0;k<1000;k++) {
-//            for (int i = 1; i < task.length/2; i++) {
-//                Random random = new Random();
-//                task[i].r = random.nextInt(2);
-//            }
-//            int temp=1;
-//            for (int i=0;i<task.length-task.length/2;i++) temp*=2;
-//            for (int i=0;i<temp;i++){
-//                int t=i;
-//                for(int j=task.length/2;j<task.length-1;j++) {
-//                    task[j].r=t%2;
-//                    t=t/2;
-//                }
+    public double simplefuntion(Task[] task) {
+        double minTime = Integer.MAX_VALUE;
         int temp = 1;
         for (int i = 0; i < task.length - 2; i++) {
             if (temp > 1000000000) break;
             temp *= 2;
         }
-        int start= (int) System.currentTimeMillis();
+        int start = (int) System.currentTimeMillis();
         for (int i = 0; i < temp; i++) {
             int t = i;
-            if (temp%1000==0){
-                int end= (int) System.currentTimeMillis();
-                if (end-start>=2000) {
-                    System.out.println(end-start);
+            if (temp % 1000 == 0) {
+                int end = (int) System.currentTimeMillis();
+                if (end - start >= 2000) {
+                    System.out.println(end - start);
                     break;
                 }
             }
@@ -225,19 +222,18 @@ public class Main {
                 task[j].r = t % 2;
                 t = t / 2;
             }
-            int calctime = CalcTimeByTaskGraph(Task.taskcopy(task));
+            double calctime = CalcTimeByTaskGraph(Task.taskcopy(task));
 //                for (int j=0;j<task.length;j++) System.out.print(task[j].r+" ");
 //                System.out.println(calctime);
             if (minTime > calctime) {
                 minTime = calctime;
             }
         }
-//        }
         return minTime;
     }
 
-    public int CalcTimeByTaskGraph(Task[] task) {
-        int totaltime = 0;
+    public double CalcTimeByTaskGraph(Task[] task) {
+        double totaltime = 0;
         int[] rd = new int[task.length];
         Task currentTask = null;
         for (int i = 0; i < task.length; i++) {
@@ -247,7 +243,7 @@ public class Main {
             task[i].isCalc = false;
         }
         while (true) {
-            int minfinishtime = Integer.MAX_VALUE;
+            double minfinishtime = Integer.MAX_VALUE;
             for (int i = 0; i < task.length; i++) {
                 if (task[i].finishtime < minfinishtime && !task[i].isCalc && rd[task[i].taskid] == 0) {
                     minfinishtime = task[i].finishtime;
@@ -269,7 +265,7 @@ public class Main {
             }
             for (int i = 0; i < currentTask.childnumber; i++) {
                 Task childtask = task[currentTask.child[i]];
-                childtask.starttime = Integer.max(childtask.starttime,
+                childtask.starttime = Math.max(childtask.starttime,
                         currentTask.finishtime + Math.abs(childtask.r - currentTask.r) * currentTask.tnet[i]);
                 if (childtask.r == 0) childtask.finishtime = childtask.c + childtask.starttime;
                 else childtask.finishtime = childtask.m + childtask.starttime;
@@ -290,12 +286,14 @@ public class Main {
             Scanner scan = new Scanner(file);
             int n = scan.nextInt();
             task = new Task[n];
+
             for (int i = 0; i < n; i++) {
                 task[i] = new Task();
-                int m = scan.nextInt();
-                int c = scan.nextInt();
-                task[i].m = m;
-                task[i].c = c;
+                int w = scan.nextInt();
+                int m = 1000;
+                int c = 3000;
+                task[i].m = (double) w / m;
+                task[i].c = (double) w / c;
                 task[i].taskid = i;
             }
             int m = scan.nextInt();
@@ -303,8 +301,9 @@ public class Main {
                 int a = scan.nextInt();
                 int b = scan.nextInt();
                 int w = scan.nextInt();
-                task[a].addchildEdge(b, w);
-                task[b].addfatherEdge(a, w);
+                int r = 10000000;
+                task[a].addchildEdge(b, (double) w / r);
+                task[b].addfatherEdge(a, (double) w / r);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -312,29 +311,26 @@ public class Main {
         return task;
     }
 
-//    private int[] list;
-//    private int[] is
-//    private void findcriticalnodes(Task[] task,int taskid) {
-//        Task currenttask=task[taskid];
-//        for (int i=0;i<currenttask.childnumber;i++){
-//            findcriticalnodes(task,currenttask.child[i]);
-//        }
-//
-//    }
-//
-//    private void GeneralGraph(Task[] task) {
-//        findcriticalnodes(task,0);
-//    }
-
+    public void Calc(Task[] task) {
+        double a = ConcurrentTask(Task.taskcopy(task), 0);
+        System.out.println(a);
+        double b = ConcurrentTask(Task.taskcopy(task), 1);
+        System.out.println(b);
+        System.out.printf("%.9f\n", (Math.min(a, b)));
+    }
 
     public static void main(String[] args) {
         Main main = new Main();
-        Task[] task = main.readFile("src/graph.txt");
-        System.out.println(main.simplefuntion(Task.taskcopy(task)));
-
-//        main.GeneralGraph(task);
-
-        System.out.println(main.ConcurrentTask(Task.taskcopy(task)));
+//        Task[] task = main.readFile("src/graph.txt");
+        Task[] task = main.readFile("src/meshgraph.txt");
+        main.Calc(Task.taskcopy(task));
+        System.out.println(main.simplefuntion(task));
+        task = main.readFile("src/treegraph.txt");
+        main.Calc(Task.taskcopy(task));
+        System.out.println(main.simplefuntion(task));
+        task = main.readFile("src/generalgraph.txt");
+        main.Calc(Task.taskcopy(task));
+        System.out.println(main.simplefuntion(task));
 
     }
 
