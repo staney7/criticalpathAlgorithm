@@ -4,6 +4,9 @@ import java.io.File;
 import java.util.*;
 
 public class Main {
+    private int _c;
+    private int _tnet;
+
     public int T(Task[] task, int left, int right) {
         int sum = 0;
         for (int i = 0; i < left; i++)
@@ -213,10 +216,10 @@ public class Main {
         int start = (int) System.currentTimeMillis();
         for (int i = 0; i < temp; i++) {
             int t = i;
-            if (temp % 1000 == 0) {
+            if (i % 1000 == 0) {
                 int end = (int) System.currentTimeMillis();
-                if (end - start >= 2000) {
-                    System.out.println(end - start);
+                if (end - start >= 8000) {
+//                    System.out.println(end - start);
                     break;
                 }
             }
@@ -295,8 +298,8 @@ public class Main {
             for (int i = 0; i < n; i++) {
                 task[i] = new Task();
                 int w = scan.nextInt();
-                int m = 1000;
-                int c = 3000;
+                int m = 100;
+                int c = this._c;
                 task[i].m = (double) w / m;
                 task[i].c = (double) w / c;
                 task[i].taskid = i;
@@ -306,7 +309,7 @@ public class Main {
                 int a = scan.nextInt();
                 int b = scan.nextInt();
                 int w = scan.nextInt();
-                int r = 10000;
+                int r = this._tnet;
                 task[a].addchildEdge(b, (double) w / r);
                 task[b].addfatherEdge(a, (double) w / r);
             }
@@ -321,7 +324,7 @@ public class Main {
 //        System.out.println(a);
         double b = ConcurrentTask(Task.taskcopy(task), 1);
 //        System.out.println(b);
-        return(Math.min(a, b));
+        return (Math.min(a, b));
     }
 
 //    public static void main(String[] args) {
@@ -400,9 +403,14 @@ public class Main {
 //    }
 
     private double _calc2(Task[] task) {
-        double minTime=1000;
+        double minTime = 1000;
         Random random = new Random(System.currentTimeMillis());
-        for (int p = 0; p < 10; p++) {
+        int[] w = new int[task.length];
+
+//        _w_initail(task, w);
+        for (int i=0;i<task.length;i++) w[i]=1;
+
+        for (int p = 0; p < 100000; p++) {
             int head = 0;
             int tail = 0;
             int[] queue = new int[100];
@@ -418,9 +426,12 @@ public class Main {
             task[task.length - 1].isCalc = true;
             for (int j = 0; j < task[task.length - 1].fnum; j++) notvisitedchild[task[task.length - 1].f[j]]--;
             task[0].isCalc = true;
+            task[0].r = 1;
+            task[task.length-1].r = 1;
             while (head <= tail) {
                 int now = queue[head];
                 queuevisited[now] = true;
+//                int w_dec = 5;
                 int temp = notvisitedchild[now];
                 for (int i = 0; i < temp; i++) {
                     path = new int[100];
@@ -433,12 +444,26 @@ public class Main {
                         int nexttaskid = -1;
                         do {
                             if (notvisitedchild[now] == 0) break;
-                            ran = random.nextInt(task[now].childnumber);
-                            nexttaskid = task[now].child[ran];
+                            int sum = 0;
+                            for (int k = 0; k < task[now].childnumber; k++) {
+                                sum += w[task[now].child[k]];
+                            }
+                            ran = random.nextInt(sum);
+                            int sum1 = 0;
+                            int childid = -1;
+                            for (int k = 0; k < task[now].childnumber; k++) {
+                                sum1 += w[task[now].child[k]];
+                                if (ran < sum1) {
+                                    childid = k;
+                                    break;
+                                }
+                            }
+                            nexttaskid = task[now].child[childid];
                         } while (task[nexttaskid].isCalc);
                         if (nexttaskid == -1) break;
                         path[pathnumber] = nexttaskid;
                         pathnumber++;
+
                         now = nexttaskid;
                         if (task[now].isCalc) {
                             path[pathnumber] = now;
@@ -459,7 +484,12 @@ public class Main {
 //                        System.out.print(path[j] + " ");
 //                    }
 //                    System.out.println();
-
+                    for(int j=0;j<task.length;j++) if (!task[j].isCalc) w[j]++;
+//                    for (int j = 1; j < pathnumber - 1; j++) {
+////                        w[path[j]] -= w_dec;
+//                        w[path[j]]--;
+//                    }
+//                    w_dec--;
                     _sequentailtask(task, path, pathnumber);
                 }
                 for (int i = 0; i < task[queue[head]].childnumber; i++)
@@ -469,14 +499,37 @@ public class Main {
                     }
                 head++;
             }
-            double currenttime=CalcTimeByTaskGraph(Task.taskcopy(task));
-            for (int i=0;i<task.length;i++){
-                System.out.print(task[i].r+" ");
-            }
-            System.out.println(currenttime);
-            if (minTime>currenttime) minTime=currenttime;
+            double currenttime = CalcTimeByTaskGraph(Task.taskcopy(task));
+//            for (int i=0;i<task.length;i++){
+//                System.out.print(task[i].r+" ");
+//            }
+//            System.out.println(currenttime);
+            if (minTime > currenttime) minTime = currenttime;
         }
         return minTime;
+    }
+
+    private void _w_initail(Task[] task, int[] w) {
+        int head = 0;
+        int tail = 0;
+        int[] queue = new int[1000];
+        boolean[] isvisted = new boolean[1000];
+        queue[0] = 0;
+        w[0] = 500000;
+        isvisted[0] = true;
+        tail++;
+        while (head < tail) {
+            int now = queue[head];
+            for (int i = 0; i < task[now].childnumber; i++)
+                if (!isvisted[task[now].child[i]]) {
+                    isvisted[task[now].child[i]]=true;
+                    queue[tail] = task[now].child[i];
+                    w[queue[tail]] += w[now] / task[now].childnumber;
+                    tail++;
+                }
+            head++;
+        }
+
     }
 
 
@@ -496,7 +549,7 @@ public class Main {
                     if (pretask.child[j] == currenttask.taskid) {
                         break;
                     }
-                sum +=Math.abs(pretask.r-currenttask.r)* pretask.tnet[j];
+                sum += Math.abs(pretask.r - currenttask.r) * pretask.tnet[j];
             }
         }
         return sum;
@@ -518,7 +571,7 @@ public class Main {
                         min = T;
                     }
                 }
-            for (int k = 1; k < pathnumber-1; k++)
+            for (int k = 1; k < pathnumber - 1; k++)
                 task[path[k]].r = 1;
             for (int k = ii; k < jj; k++)
                 task[path[k]].r = 0;
@@ -538,7 +591,7 @@ public class Main {
             }
             for (int j = 1; j < ii; j++)
                 task[path[j]].r = 1;
-            for (int j = ii; j < pathnumber-1; j++)
+            for (int j = ii; j < pathnumber - 1; j++)
                 task[path[j]].r = 0;
         } else if ((task[path[0]].r == 0) && (task[path[pathnumber - 1]].r == 1)) {
             double min = Integer.MAX_VALUE;
@@ -556,36 +609,79 @@ public class Main {
             }
             for (int j = 1; j < ii; j++)
                 task[path[j]].r = 0;
-            for (int j = ii; j < pathnumber-1; j++)
+            for (int j = ii; j < pathnumber - 1; j++)
                 task[path[j]].r = 1;
         } else if ((task[path[0]].r == 0) && (task[path[pathnumber - 1]].r == 0)) {
-            for (int i = 1; i < pathnumber-1; i++) {
+            for (int i = 1; i < pathnumber - 1; i++) {
                 task[path[i]].r = 0;
             }
         }
     }
 
 
-    public static void main(String[] args) {
-        Main main = new Main();
-        Task[] task = main.readFile("src/meshgraph.txt");
+    public void _main(int tasknumber, int p, int c, int tnet) throws InterruptedException {
+
+        System.out.println("参数tasknumber:" + tasknumber + " 倍数：" + p + " 云处理能力:" + c + " 带宽：" + tnet);
+        this._c = c;
+        this._tnet = tnet;
+        TextCreate textCreate = new TextCreate(tasknumber, p);
+        Thread.sleep(1000);
+        Task[] task = this.readFile("src/meshgraph1.txt");
         System.out.println("mesh");
-        System.out.println("最新的算法："+main._calc2(Task.taskcopy(task)));
-        System.out.println("开始的算法："+main.Calc(Task.taskcopy(task)));
-        System.out.println("最优的算法："+main.simplefuntion(Task.taskcopy(task)));
+        System.out.println(this._calc2(Task.taskcopy(task)));
+        System.out.println(this.Calc(Task.taskcopy(task)));
+        System.out.println(this.simplefuntion(Task.taskcopy(task)));
+        for (int i = 1; i < task.length - 1; i++) task[i].r = 0;
+        task[0].r = 1;
+        task[task.length - 1].r = 1;
+        System.out.println( CalcTimeByTaskGraph(task));
 //        System.out.println(main.CalcTimeByTaskGraph(task));
         System.out.println("tree");
-        task = main.readFile("src/treegraph.txt");
-        System.out.println("最新的算法："+main._calc2(Task.taskcopy(task)));
-        System.out.println("开始的算法："+main.Calc(Task.taskcopy(task)));
-        System.out.println("最优的算法："+main.simplefuntion(Task.taskcopy(task)));
+        task = this.readFile("src/treegraph1.txt");
+        System.out.println(this._calc2(Task.taskcopy(task)));
+        System.out.println(this.Calc(Task.taskcopy(task)));
+        System.out.println(this.simplefuntion(Task.taskcopy(task)));
+        for (int i = 1; i < task.length - 1; i++) task[i].r = 0;
+        task[0].r = 1;
+        task[task.length - 1].r = 1;
+        System.out.println(CalcTimeByTaskGraph(task));
 //        System.out.println(main.CalcTimeByTaskGraph(task));
         System.out.println("general");
-        task = main.readFile("src/generalgraph.txt");
-        System.out.println("最新的算法："+main._calc2(Task.taskcopy(task)));
-        System.out.println("开始的算法："+main.Calc(Task.taskcopy(task)));
-        System.out.println("最优的算法："+main.simplefuntion(Task.taskcopy(task)));
+        task = this.readFile("src/generalgraph1.txt");
+        System.out.println(this._calc2(Task.taskcopy(task)));
+        System.out.println(this.Calc(Task.taskcopy(task)));
+        System.out.println(this.simplefuntion(Task.taskcopy(task)));
+        for (int i = 1; i < task.length - 1; i++) task[i].r = 0;
+        task[0].r = 1;
+        task[task.length - 1].r = 1;
+        System.out.println( CalcTimeByTaskGraph(task));
 //        System.out.println(main.CalcTimeByTaskGraph(task));
+        System.out.println();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Main main = new Main();
+//        main._main(10, 2, 200, 300);
+//        main._main(13, 2, 200, 300);
+//        main._main(15, 2, 200, 300);
+//        main._main(18, 2, 200, 300);
+//        main._main(20, 2, 200, 300);
+//
+//        main._main(15, 1, 200, 500);
+//        main._main(15, 2, 200, 500);
+//        main._main(15, 3, 200, 500);
+//
+//        main._main(15, 2, 200, 500);
+//        main._main(15, 2, 300, 500);
+//        main._main(15, 2, 400, 500);
+//        main._main(15, 2, 500, 500);
+//        main._main(15, 2, 600, 500);
+//
+//        main._main(15, 2, 200, 200);
+//        main._main(15, 2, 200, 500);
+//        main._main(15, 2, 200, 1000);
+//        main._main(15, 2, 200, 2000);
+        main._main(15, 2, 100, 2000);
     }
 
 
