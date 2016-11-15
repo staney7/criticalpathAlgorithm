@@ -111,7 +111,13 @@ public class TextCreate {
     private void _createEdge(FileWriter fw,  Task[] task, int x, int y,boolean[][] f) throws IOException {
         task[x].addchildEdge(y,0);
         task[y].addfatherEdge(x,0);
-        fw.write(x + " " + y + " " + (random.nextInt(80)+20) + "\n");
+        if (x==0&&y==1) {
+            fw.write(x + " " + y + " " + 100 + "\n");
+        } else if(x==task.length-2&&y==task.length-1){
+            fw.write(x + " " + y + " " + 100 + "\n");
+        } else {
+            fw.write(x + " " + y + " " + (random.nextInt(80) + 20) + "\n");
+        }
         f[x][y]=true;
         f[y][x]=true;
 //        System.out.println(x+" "+y);
@@ -128,14 +134,14 @@ public class TextCreate {
             }
             fw.write("0\n");
             fw.flush();
-            fw.write((tasknumber / 2 + tasknumber - 1) + "\n");
-            fw.write("0 1 " + (random.nextInt(80)+20) + "\n");
+            fw.write((tasknumber / 2 + tasknumber - 2) + "\n");
+            fw.write("0 1 " + 100 + "\n");
             for (int i = 1; i <= (tasknumber - 1) / 2; i++) {
                 fw.write(i + " " + (2 * i) + " " + (random.nextInt(80)+20) + "\n");
                 if (2 * i + 1 < tasknumber)
                     fw.write(i + " " + (2 * i + 1) + " " + (random.nextInt(80)+20) + "\n");
             }
-            for (int i = (tasknumber - 1) / 2 + 1; i < tasknumber; i++) {
+            for (int i = (tasknumber - 1) / 2 + 1; i < tasknumber-1; i++) {
                 fw.write(i + " " + (tasknumber - 1) + " " + (random.nextInt(80)+20) + "\n");
             }
             fw.flush();
@@ -163,7 +169,7 @@ public class TextCreate {
 //            System.out.println(len + " " + h);
             fw.write((tasknumber + h-2) + "\n");
 //            System.out.println(tasknumber+h-2);
-            fw.write(0 + " " + (1) + " " + (random.nextInt(80)+20) + "\n");
+            fw.write(0 + " " + (1) + " " + 100 + "\n");
             for (int k=0;k<h-1;k++) {
                 fw.write(1 + " " + (k*len+2) + " " + (random.nextInt(80)+20) + "\n");
                 for (int i = k*len+2; i < (k+1)*len+1; i++) {
@@ -172,8 +178,9 @@ public class TextCreate {
                 fw.write(((k+1)*len+1) + " " + (tasknumber - 2) + " " + (random.nextInt(80)+20) + "\n");
             }
             fw.write(1+" "+((h-1)*len+2)+" "+(random.nextInt(80)+20)+"\n");
-            for (int i=(h-1)*len+2;i<tasknumber-1;i++)
+            for (int i=(h-1)*len+2;i<tasknumber-2;i++)
             fw.write(i+" "+(i+1)+" "+(random.nextInt(80)+20)+"\n");
+            fw.write(tasknumber-2+" "+(tasknumber-1)+" "+100+"\n");
             fw.flush();
         } catch (IOException e) {
             e.printStackTrace();

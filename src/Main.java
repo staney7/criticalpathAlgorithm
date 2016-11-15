@@ -661,28 +661,26 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
         Main main = new Main();
-//        main._main(10, 2, 200, 300);
-//        main._main(13, 2, 200, 300);
-//        main._main(15, 2, 200, 300);
-//        main._main(18, 2, 200, 300);
-//        main._main(20, 2, 200, 300);
+//        main._main(10, 2, 200, 100);
+//        main._main(13, 2, 200, 100);
+//        main._main(15, 2, 200, 100);
+//        main._main(18, 2, 200, 100);
+//        main._main(20, 2, 200, 100);
 //
-//        main._main(15, 1, 200, 500);
-//        main._main(15, 2, 200, 500);
-//        main._main(15, 3, 200, 500);
+//        main._main(15, 1, 200, 100);
+//        main._main(15, 2, 200, 100);
+//        main._main(15, 3, 200, 100);
 //
-//        main._main(15, 2, 200, 500);
-//        main._main(15, 2, 300, 500);
-//        main._main(15, 2, 400, 500);
-//        main._main(15, 2, 500, 500);
-//        main._main(15, 2, 600, 500);
+        main._main(15, 2, 200, 100);
+        main._main(15, 2, 300, 100);
+        main._main(15, 2, 400, 100);
+        main._main(15, 2, 500, 100);
+        main._main(15, 2, 600, 100);
 //
 //        main._main(15, 2, 200, 200);
 //        main._main(15, 2, 200, 500);
 //        main._main(15, 2, 200, 1000);
 //        main._main(15, 2, 200, 2000);
-        main._main(15, 2, 100, 2000);
+//        main._main(15, 2, 200, 200);
     }
-
-
 }
